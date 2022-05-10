@@ -20,7 +20,7 @@ the better we'll feel that it's going to do what it purports to do.
 
 ### FAQ
 
-**Q**: Why would I do this?
+**Q**: Why would I use this contract?
 
 **A**: With one transaction (or signed message) from your cold wallet, you'll be able to use your hot wallet to act as the owner of your cold wallet's NFTs. At minimum, we'll be using this at [10KTF][https://10ktf.com/].
 
