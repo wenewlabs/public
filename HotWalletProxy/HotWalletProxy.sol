@@ -28,12 +28,6 @@ interface ERC1155Interface {
  * Additionally, we provide affordance for locking a hot wallet address so that this
  * attack's surface area can be further reduced.
  *
- * It's important to note that, for better operational security, it's best to use an
- * air-gapped machine to generate a signed transaction using the cold wallet (a UX for this
- * is outside the scope of this contract, but a reference implementation is provided by WENEW Labs).
- * This approach will keep the cold wallet disconnected from the network, and reduce the
- * attack surface area.
- *
  * Example:
  *
  *   - Cold wallet 0x123 owns BAYC #456
@@ -44,7 +38,7 @@ interface ERC1155Interface {
  *     + returns 0xABC from ownerOf(BAYC_ADDRESS, 456)
  *
  * NB: With balanceOf and balanceOfBatch, this contract will look up the balance of both the cold
- * wallet and the hot wallet, _and return their sum_.
+ * wallets and the requested wallet, _and return their sum_.
  *
  * To remove a hot wallet, you can either:
  *   - Submit a transaction from the hot wallet you want to remove, renouncing the link, or
@@ -438,11 +432,6 @@ contract HotWalletProxy is
       unchecked{ ++i; }
     }
 
-    WalletLink memory hotWallet = coldWalletToHotWallet[owner];
-    if (hotWallet.walletAddress != address(0)) {
-      total += erc721Contract.balanceOf(hotWallet.walletAddress);
-    }
-
     return total + erc721Contract.balanceOf(owner);
   }
 
@@ -505,31 +494,14 @@ contract HotWalletProxy is
       uint256 allWalletsLength = coldWallets.length;
 
       /**
-       * If there's a hot wallet linked to this wallet (e.g. we're querying the cold wallet),
-       * then include the hot wallet's balance as well.
-       *
        * The ordering of addresses in allWallets is:
        * [
        *   ...coldWallets,
-       *   hotWallet, // if one exists
        *   owner
        * ]
        */
-      WalletLink memory hotWallet = coldWalletToHotWallet[owner];
-      bool hasHotWallet = (hotWallet.walletAddress != address(0));
-      if (hasHotWallet) {
-        allWalletsLength += 1;
-      }
-
       address[] memory allWallets = new address[](allWalletsLength + 1);
       uint256[] memory batchIds = new uint256[](allWalletsLength + 1);
-
-      if (hasHotWallet) {
-        uint256 index = allWalletsLength - 1;
-
-        allWallets[index] = hotWallet.walletAddress;
-        batchIds[index] = id;
-      }
 
       allWallets[allWalletsLength] = owner;
       batchIds[allWalletsLength] = id;
@@ -584,11 +556,6 @@ contract HotWalletProxy is
       total += erc1155Contract.balanceOf(coldWallet, tokenId);
 
       unchecked{ ++i; }
-    }
-
-    WalletLink memory hotWallet = coldWalletToHotWallet[owner];
-    if (hotWallet.walletAddress != address(0)) {
-      total += erc1155Contract.balanceOf(hotWallet.walletAddress, tokenId);
     }
 
     return total + erc1155Contract.balanceOf(owner, tokenId);
